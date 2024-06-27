@@ -10,6 +10,8 @@ builder.Services.AddDbContext<AdminContext>(opt =>
     opt.UseInMemoryDatabase("POSApp"));
 builder.Services.AddDbContext<CashierContext>(opt =>
     opt.UseInMemoryDatabase("POSApp"));
+builder.Services.AddDbContext<ProductContext>(opt =>
+    opt.UseInMemoryDatabase("POSApp"));
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
