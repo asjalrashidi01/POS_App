@@ -5,89 +5,95 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using WebAPI.Models;
+using POS_App;
+using WebAPI.Models.Users;
 
 namespace WebAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AdminItemsController : ControllerBase
+    public class AdminUsersController : ControllerBase
     {
-        private readonly AdminContext _context;
+        private readonly DataContext _context;
 
-        public AdminItemsController(AdminContext context)
+        public AdminUsersController(DataContext context)
         {
             _context = context;
         }
 
-        // GET: api/AdminItems
+
+        // GET: api/AdminUsers
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<AdminItem>>> GetAdminItems()
+        public async Task<ActionResult<IEnumerable<AdminDTO>>> GetAdminUsers()
         {
-            return await _context.AdminItems.ToListAsync();
-        }
+            
+            List<AdminEntity> users = _context.GetAdminUsers();
 
-        // GET: api/AdminItems/{email}
-        [HttpGet("{email}")]
-        public async Task<ActionResult<AdminItem>> GetAdminItem(string email)
-        {
-            var adminItem = await _context.AdminItems.FindAsync(email);
+            List<AdminDTO> result = new List<AdminDTO>();
 
-            if (adminItem == null)
+            if (users == null)
             {
                 return NotFound();
             }
+            else
+            {
+                foreach (var user in users)
+                {
+                    result.Add(new AdminDTO { Name = user.Name, Email = user.Email });
+                }
 
-            return adminItem;
+
+                return Ok(result);
+            }
         }
 
-        // POST: api/AdminItems/Login
+        //// GET: api/AdminUser/{email}
+        //[HttpGet("{email}")]
+        //public async Task<ActionResult<AdminDTO>> GetAdminUser(string email)
+        //{
+        //    var adminItem = await _context.;
+
+        //    if (adminItem == null)
+        //    {
+        //        return NotFound();
+        //    }
+
+        //    return adminItem;
+        //}
+
+        // POST: api/AdminUsers/Login
         [HttpPost("Login")]
-        public async Task<ActionResult<AdminItem>> LoginAdminItem(string email, string password)
+        public async Task<ActionResult<AdminDTO>> LoginAdminUser(string email, string password)
         {
-            var admin = await _context.AdminItems.FirstOrDefaultAsync(x => x.Email == email);
-            if (admin == null)
+            string admin = await _context.LoginAdminUser(email, password);
+
+            if (admin == "Incorrect password!")
             {
-                return NotFound(new { message = "No user found with this email address." });
+                return Conflict(new { message = "Incorrect password!" });
+            }
+            else if (admin == "Login failed!")
+            {
+                return Conflict(new { message = "Login failed!" });
+            }
+            else if (admin == "Login successful!")
+            {
+                return Ok(new { message = "Login successful!"});
             }
             else
             {
-                if (password == admin.Password)
-                {
-                    return Ok(admin);
-                }
-                else
-                {
-                    return Unauthorized(new { message = "Incorrect Password" });
-                }
-
+                return NotFound();
             }
         }
 
         // POST: api/AdminItems/SignUp
         [HttpPost("Signup")]
-        public async Task<ActionResult<AdminItem>> SignupAdminItem(string email, string password, string name)
+        public async Task<ActionResult<AdminDTO>> SignupAdminUser(string email, string password, string name)
         {
-            var admin = await _context.AdminItems.FirstOrDefaultAsync(x => x.Email == email);
-            if (admin != null)
-            {
-                return Conflict(new { message = "Email is already in use." }); ;
-            }
-            else
-            {
-                var adminUser = new AdminItem
-                {
-                    Name = name,
-                    Email = email,
-                    Password = password
-                };
+            var adminEntity = new AdminEntity(name, email, password);
+            
+            _context.AddAdminUser(adminEntity);
 
-                _context.AdminItems.Add(adminUser);
-                await _context.SaveChangesAsync();
-
-                return CreatedAtAction("GetAdminItem", new { email = adminUser.Email }, adminUser);
-
-            }
+            return Ok("Admin user signed up!");
         }
     }
 }

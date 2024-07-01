@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using POS_App;
 using WebAPI.Models;
 
 namespace WebAPI.Controllers
@@ -13,81 +13,75 @@ namespace WebAPI.Controllers
     [ApiController]
     public class CashierItemsController : ControllerBase
     {
-        private readonly CashierContext _context;
+        private readonly DataContext _context;
 
-        public CashierItemsController(CashierContext context)
+        public CashierItemsController(DataContext context)
         {
             _context = context;
         }
 
-        // GET: api/CashierItems
+        // GET: api/CashierUsers
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<CashierItem>>> GetCashierItems()
+        public async Task<ActionResult<IEnumerable<CashierDTO>>> GetCashierUsers()
         {
-            return await _context.CashierItems.ToListAsync();
-        }
+            List<CashierEntity> users = _context.GetCashierUsers();
 
-        // GET: api/CashierItems/{email}
-        [HttpGet("{email}")]
-        public async Task<ActionResult<CashierItem>> GetCashierItem(string email)
-        {
-            var cashierItem = await _context.CashierItems.FindAsync(email);
+            List<CashierDTO> result = new List<CashierDTO>();
 
-            if (cashierItem == null)
+            foreach (var user in users)
             {
-                return NotFound();
+                result.Add(new CashierDTO { Name = user.Name, Email = user.Email });
             }
 
-            return cashierItem;
+            return result;
         }
+
+        //// GET: api/CashierItems/{email}
+        //[HttpGet("{email}")]
+        //public async Task<ActionResult<CashierItem>> GetCashierItem(string email)
+        //{
+        //    var cashierItem = await _context.CashierItems.FindAsync(email);
+
+        //    if (cashierItem == null)
+        //    {
+        //        return NotFound();
+        //    }
+
+        //    return cashierItem;
+        //}
 
         // POST: api/CashierItems/Login
         [HttpPost("Login")]
-        public async Task<ActionResult<CashierItem>> LoginCashierItem(string email, string password)
+        public async Task<ActionResult<CashierDTO>> LoginCashierUser(string email, string password)
         {
-            var cashier = await _context.CashierItems.FirstOrDefaultAsync(x => x.Email == email);
-            if (cashier == null)
+            string cashier = await _context.LoginCashierUser(email, password);
+
+            if (cashier == "Incorrect password!") {
+                return Conflict(new { message = "Incorrect password!" });
+            }
+            else if (cashier == "Login failed!")
             {
-                return NotFound(new { message = "No user found with this email address." });
+                return Conflict(new { message = "Login failed" });
+            }
+            else if (cashier == "Login successful!")
+            {
+                return Ok(new { message = "Login successful!" });
             }
             else
             {
-                if (password == cashier.Password)
-                {
-                    return Ok(cashier);
-                }
-                else
-                {
-                    return Unauthorized(new { message = "Incorrect Password" });
-                }
-
+                return NotFound();
             }
         }
 
         // POST: api/CashierItems/SignUp
         [HttpPost("Signup")]
-        public async Task<ActionResult<CashierItem>> SignupCashierItem(string email, string password, string name)
+        public async Task<ActionResult<CashierDTO>> SignupCashierItem(string email, string password, string name)
         {
-            var cashier = await _context.CashierItems.FirstOrDefaultAsync(x => x.Email == email);
-            if (cashier != null)
-            {
-                return Conflict(new { message = "Email is already in use." }); ;
-            }
-            else
-            {
-                var cashierUser = new CashierItem
-                {
-                    Name = name,
-                    Email = email,
-                    Password = password
-                };
+            var cashierEntity = new CashierEntity(name, email, password);
 
-                _context.CashierItems.Add(cashierUser);
-                await _context.SaveChangesAsync();
+            _context.AddCashierUser(cashierEntity);
 
-                return CreatedAtAction("GetCashierItem", new { email = cashierUser.Email }, cashierUser);
-
-            }
+            return Ok("Cashier user signed up!");   
         }
     }
 }

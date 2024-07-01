@@ -1,17 +1,13 @@
 using Microsoft.EntityFrameworkCore;
-using WebAPI.Models;
+using POS_App;
+using WebAPI.Models.Users;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
 builder.Services.AddControllers();
-builder.Services.AddDbContext<AdminContext>(opt =>
-    opt.UseInMemoryDatabase("POSApp"));
-builder.Services.AddDbContext<CashierContext>(opt =>
-    opt.UseInMemoryDatabase("POSApp"));
-builder.Services.AddDbContext<ProductContext>(opt =>
-    opt.UseInMemoryDatabase("POSApp"));
+builder.Services.AddSingleton<DataContext>();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

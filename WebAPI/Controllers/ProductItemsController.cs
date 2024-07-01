@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using POS_App;
 using WebAPI.Models;
 
 namespace WebAPI.Controllers
@@ -13,102 +14,83 @@ namespace WebAPI.Controllers
     [ApiController]
     public class ProductItemsController : ControllerBase
     {
-        private readonly ProductContext _context;
+        private readonly DataContext _context;
 
-        public ProductItemsController(ProductContext context)
+        public ProductItemsController(DataContext context)
         {
             _context = context;
         }
 
         // GET: api/ProductItems
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ProductItem>>> GetProductItems()
+        public async Task<ActionResult<IEnumerable<InventoryDTO>>> GetProductItems()
         {
-            return await _context.ProductItems.ToListAsync();
+            List<ProductEntity> products = await _context.GetProductList();
+
+            return Ok(products);
         }
 
-        // GET: api/ProductItems/{name}
-        [HttpGet("{name}")]
-        public async Task<ActionResult<ProductItem>> GetProductItem(string name)
-        {
-            var productItem = await _context.ProductItems.FindAsync(name);
+        //// GET: api/ProductItems/{name}
+        //[HttpGet("{name}")]
+        //public async Task<ActionResult<ProductItem>> GetProductItem(string name)
+        //{
+        //    var productItem = await _context.ProductItems.FindAsync(name);
 
-            if (productItem == null)
-            {
-                return NotFound();
-            }
+        //    if (productItem == null)
+        //    {
+        //        return NotFound();
+        //    }
 
-            return productItem;
-        }
+        //    return productItem;
+        //}
 
         // POST: api/ProductItems/AddProduct
         [HttpPost("AddProduct")]
-        public async Task<ActionResult<ProductItem>> AddProductItem(string name, float price, float quantity, int type, int category)
+        public async Task<ActionResult<string>> AddProductItem(string name, float price, float quantity, int type, int category)
         {
-            var product = await _context.ProductItems.FirstOrDefaultAsync(x => x.Name == name);
-            if (product != null)
-            {
-                return Conflict(new { message = "Product already exists. Update quantity." }); ;
-            }
-            else
-            {
-                var productUser = new ProductItem
-                {
-                    Name = name,
-                    Price = price,
-                    Quantity = quantity,
-                    Type = type,
-                    Category = category
-                };
+            _context.AddInventoryProduct(new ProductEntity(name, price, quantity, type, category));
 
-                _context.ProductItems.Add(productUser);
-                await _context.SaveChangesAsync();
-
-                return CreatedAtAction("GetProductItem", new { name = productUser.Name }, productUser);
-
-            }
+            return Ok(new { message = name + " has been added to the inventory." });
+            
         }
 
         // PATCH: api/ProductItems/UpdateProduct
         [HttpPatch("UpdateProduct")]
-        public async Task<ActionResult<ProductItem>> UpdateProductItem(string name, float price, float quantity, int type, int category)
+        public async Task<ActionResult<string>> UpdateProductItem(string name, string new_name, float price, float quantity, int type, int category)
         {
-            var product = await _context.ProductItems.FirstOrDefaultAsync(x => x.Name == name);
-            if (product == null)
+            var product = await _context.UpdateInventoryProduct(name, new_name, price, quantity, type, category);
+
+            if (product == "\n\nProduct not found. Please try again.")
             {
-                return Conflict(new { message = "Product does not exist." }); ;
+                return NotFound(new {message = "Product not found. Please try again."});
+            }
+            else if (product == "Success!")
+            {
+                return Ok(new { message = name + " has been updated." });
             }
             else
             {
-                product.Name = name;
-                product.Price = price;
-                product.Quantity = quantity;
-                product.Type = type;
-                product.Category = category;
-                await _context.SaveChangesAsync();
-
-                return CreatedAtAction("GetProductItem", new { name = product.Name }, product);
-
+                return Conflict(new { message = "An error occurred. Please try again." });
             }
         }
 
         // DELETE: api/ProductItems/DeleteProduct
         [HttpDelete("DeleteProduct")]
-        public async Task<ActionResult<ProductItem>> DeleteProductItem(string name)
+        public async Task<ActionResult<string>> DeleteProductItem(string name)
         {
-            var product = await _context.ProductItems.FirstOrDefaultAsync(x => x.Name == name);
-            if (product == null)
+            var product = await _context.RemoveInventoryProduct(name);
+            
+            if (product == "\n\nProduct not found. Please try again.")
             {
-                return Conflict(new { message = "Product does not exist." }); ;
+                return Conflict(new { message = "Product not found. Please try again." }); ;
+            }
+            else if (product == "Success!")
+            {
+                return Ok(new { message = name + " has been removed from the inventory." });
             }
             else
             {
-                _context.ProductItems.Remove(product);
-
-                await _context.SaveChangesAsync();
-
-                return NoContent();
-
+                return Conflict(new { message = "An error occurred. Please try again." });
             }
         }
     }
