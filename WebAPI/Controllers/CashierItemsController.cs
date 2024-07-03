@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Identity.Web.Resource;
 using POS_App;
 using WebAPI.Models;
 
@@ -21,6 +22,7 @@ namespace WebAPI.Controllers
         }
 
         // GET: api/CashierUsers
+        [RequiredScope("Access pos-app-asjal")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<CashierDTO>>> GetCashierUsers()
         {
@@ -51,6 +53,7 @@ namespace WebAPI.Controllers
         //}
 
         // POST: api/CashierItems/Login
+        [RequiredScope("Access pos-app-asjal")]
         [HttpPost("Login")]
         public async Task<ActionResult<CashierDTO>> LoginCashierUser(string email, string password)
         {
@@ -74,6 +77,7 @@ namespace WebAPI.Controllers
         }
 
         // POST: api/CashierItems/SignUp
+        [RequiredScope("Access pos-app-asjal")]
         [HttpPost("Signup")]
         public async Task<ActionResult<CashierDTO>> SignupCashierItem(string email, string password, string name)
         {

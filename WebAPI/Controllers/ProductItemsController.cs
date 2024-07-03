@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Web.Resource;
 using POS_App;
 using WebAPI.Models;
 
@@ -22,6 +23,7 @@ namespace WebAPI.Controllers
         }
 
         // GET: api/ProductItems
+        [RequiredScope("Access pos-app-asjal")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<InventoryDTO>>> GetProductItems()
         {
@@ -45,6 +47,7 @@ namespace WebAPI.Controllers
         //}
 
         // POST: api/ProductItems/AddProduct
+        [RequiredScope("Access pos-app-asjal")]
         [HttpPost("AddProduct")]
         public async Task<ActionResult<string>> AddProductItem(string name, float price, float quantity, int type, int category)
         {
@@ -55,6 +58,7 @@ namespace WebAPI.Controllers
         }
 
         // PATCH: api/ProductItems/UpdateProduct
+        [RequiredScope("Access pos-app-asjal")]
         [HttpPatch("UpdateProduct")]
         public async Task<ActionResult<string>> UpdateProductItem(string name, string new_name, float price, float quantity, int type, int category)
         {
@@ -75,6 +79,7 @@ namespace WebAPI.Controllers
         }
 
         // DELETE: api/ProductItems/DeleteProduct
+        [RequiredScope("Access pos-app-asjal")]
         [HttpDelete("DeleteProduct")]
         public async Task<ActionResult<string>> DeleteProductItem(string name)
         {

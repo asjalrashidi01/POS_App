@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Web.Resource;
 using POS_App;
 using WebAPI.Models.Users;
 
@@ -23,6 +24,7 @@ namespace WebAPI.Controllers
 
 
         // GET: api/AdminUsers
+        [RequiredScope("Access pos-app-asjal")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<AdminDTO>>> GetAdminUsers()
         {
@@ -62,6 +64,7 @@ namespace WebAPI.Controllers
         //}
 
         // POST: api/AdminUsers/Login
+        [RequiredScope("Access pos-app-asjal")]
         [HttpPost("Login")]
         public async Task<ActionResult<AdminDTO>> LoginAdminUser(string email, string password)
         {
@@ -86,6 +89,7 @@ namespace WebAPI.Controllers
         }
 
         // POST: api/AdminItems/SignUp
+        [RequiredScope("Access pos-app-asjal")]
         [HttpPost("Signup")]
         public async Task<ActionResult<AdminDTO>> SignupAdminUser(string email, string password, string name)
         {

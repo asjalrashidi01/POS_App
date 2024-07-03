@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Web.Resource;
 using POS_App;
 using WebAPI.Models;
 
@@ -22,6 +23,7 @@ namespace WebAPI.Controllers
         }
 
         // GET: api/SaleItems
+        [RequiredScope("Access pos-app-asjal")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<SaleDTO>>> GetSaleItems()
         {
@@ -39,6 +41,7 @@ namespace WebAPI.Controllers
         }
 
         // POST: api/SaleItems/AddSale
+        [RequiredScope("Access pos-app-asjal")]
         [HttpPost]
         public async Task<ActionResult<string>> AddSaleItem(List<ProductEntity> products, float total)
         {
