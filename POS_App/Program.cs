@@ -1,5 +1,6 @@
 ﻿#region Imports
 
+using POS_App;
 using System;
 using System.Xml.Linq;
 
@@ -7,7 +8,7 @@ using System.Xml.Linq;
 
 #region Initializing DB (static class)
 
-DataContext data = new DataContext(new List<Admin>(), new List<Cashier>(), new Inventory(new List<Product>()), new List<Sale>(), new Sale(new List<Product>(), 0));
+DataContext data = new DataContext(new List<AdminEntity>(), new List<CashierEntity>(), new InventoryEntity(new List<ProductEntity>()), new List<SaleEntity>(), new SaleEntity(new List<ProductEntity>(), 0));
 
 #endregion
 
@@ -40,22 +41,22 @@ string choice = "0";
 
 // Adding dummy users
 
-data.AddAdminUser(new Admin("Alice", "alice@gmail.com", "alice123"));
-data.AddAdminUser(new Admin("Bob", "bob@gmail.com", "bob123"));
-data.AddAdminUser(new Admin("Claire", "claire@gmail.com", "claire123"));
+data.AddAdminUser(new AdminEntity("Alice", "alice@gmail.com", "alice123"));
+data.AddAdminUser(new AdminEntity("Bob", "bob@gmail.com", "bob123"));
+data.AddAdminUser(new AdminEntity("Claire", "claire@gmail.com", "claire123"));
 
-data.AddCashierUser(new Cashier("Alex", "alex@gmail.com", "alex123"));
-data.AddCashierUser(new Cashier("Beth", "beth@gmail.com", "beth123"));
-data.AddCashierUser(new Cashier("Charlie", "charlie@gmail.com", "charlie123"));
+data.AddCashierUser(new CashierEntity("Alex", "alex@gmail.com", "alex123"));
+data.AddCashierUser(new CashierEntity("Beth", "beth@gmail.com", "beth123"));
+data.AddCashierUser(new CashierEntity("Charlie", "charlie@gmail.com", "charlie123"));
 
 // Adding dummy products
 
-data.AddInventoryProduct(new Product("iPhone", 700f, 5, 1, 1));
-data.AddInventoryProduct(new Product("HP Probook", 900f, 10, 1, 2));
-data.AddInventoryProduct(new Product("Red Shirt", 20f, 12, 2, 3));
-data.AddInventoryProduct(new Product("Blue Jeans", 30f, 6, 2, 4));
-data.AddInventoryProduct(new Product("Apple", 2f, 100, 3, 5));
-data.AddInventoryProduct(new Product("Potato", 1f, 250, 3, 6));
+data.AddInventoryProduct(new ProductEntity("iPhone", 700f, 5, 1, 1));
+data.AddInventoryProduct(new ProductEntity("HP Probook", 900f, 10, 1, 2));
+data.AddInventoryProduct(new ProductEntity("Red Shirt", 20f, 12, 2, 3));
+data.AddInventoryProduct(new ProductEntity("Blue Jeans", 30f, 6, 2, 4));
+data.AddInventoryProduct(new ProductEntity("Apple", 2f, 100, 3, 5));
+data.AddInventoryProduct(new ProductEntity("Potato", 1f, 250, 3, 6));
 
 // Main App
 
@@ -92,7 +93,7 @@ if (choice == "1")
         Console.WriteLine("Enter your password: ");
         string password = Console.ReadLine();
 
-        Admin admin = new Admin(name, email, password);
+        AdminEntity admin = new AdminEntity(name, email, password);
         data.AddAdminUser(admin);
 
         Console.WriteLine("\n\nLogIn (Admin)");
@@ -103,7 +104,7 @@ if (choice == "1")
         Console.WriteLine("Enter your password: ");
         password = Console.ReadLine();
 
-        string loginStatus = data.LoginAdminUser(email, password);
+        string loginStatus = await data.LoginAdminUser(email, password);
 
         if (loginStatus == "Login successful!")
         {
@@ -154,7 +155,7 @@ if (choice == "1")
 
                     int category_value = int.Parse(Console.ReadLine());
 
-                    data.AddInventoryProduct(new Product(product_name, price, quantity, type_value, category_value));
+                    data.AddInventoryProduct(new ProductEntity(product_name, price, quantity, type_value, category_value));
                 }
                 else if (choice == "2")
                 {
@@ -162,7 +163,7 @@ if (choice == "1")
 
                     string product_name = Console.ReadLine();
 
-                    string removeStatus = data.RemoveInventoryProduct(product_name);
+                    string removeStatus = await data.RemoveInventoryProduct(product_name);
 
                     if (removeStatus == "Success!")
                     {
@@ -209,7 +210,7 @@ if (choice == "1")
 
                     int new_category_value = int.Parse(Console.ReadLine());
 
-                    string updateStatus = data.UpdateInventoryProduct(product_name, new_name, new_price, new_quantity, new_type_value, new_category_value);
+                    string updateStatus = await data.UpdateInventoryProduct(product_name, new_name, new_price, new_quantity, new_type_value, new_category_value);
 
                     if (updateStatus == "Success!")
                     {
@@ -245,7 +246,7 @@ if (choice == "1")
         Console.WriteLine("Enter your password: ");
         string password = Console.ReadLine();
 
-        string loginStatus = data.LoginAdminUser(email, password);
+        string loginStatus = await data.LoginAdminUser(email, password);
 
         if (loginStatus == "Login successful!")
         {
@@ -296,7 +297,7 @@ if (choice == "1")
 
                     int category_value = int.Parse(Console.ReadLine());
 
-                    data.AddInventoryProduct(new Product(product_name, price, quantity, type_value, category_value));
+                    data.AddInventoryProduct(new ProductEntity(product_name, price, quantity, type_value, category_value));
                 }
                 else if (choice == "2")
                 {
@@ -304,7 +305,7 @@ if (choice == "1")
 
                     string product_name = Console.ReadLine();
 
-                    string removeStatus = data.RemoveInventoryProduct(product_name);
+                    string removeStatus = await data.RemoveInventoryProduct(product_name);
 
                     if (removeStatus == "Success!")
                     {
@@ -351,7 +352,7 @@ if (choice == "1")
 
                     int new_category_value = int.Parse(Console.ReadLine());
 
-                    string updateStatus = data.UpdateInventoryProduct(product_name, new_name, new_price, new_quantity, new_type_value, new_category_value);
+                    string updateStatus = await data.UpdateInventoryProduct(product_name, new_name, new_price, new_quantity, new_type_value, new_category_value);
 
                     if (updateStatus == "Success!")
                     {
@@ -402,7 +403,7 @@ else if (choice == "2") {
         Console.WriteLine("Enter your password: ");
         string password = Console.ReadLine();
 
-        Cashier cashier = new Cashier(name, email, password);
+        CashierEntity cashier = new CashierEntity(name, email, password);
         data.AddCashierUser(cashier);
 
         Console.WriteLine("\n\nLogIn (Cashier)");
@@ -413,7 +414,7 @@ else if (choice == "2") {
         Console.WriteLine("Enter your password: ");
         password = Console.ReadLine();
 
-        string loginStatus = data.LoginCashierUser(email, password);
+        string loginStatus = await data.LoginCashierUser(email, password);
 
         if (loginStatus == "Login successful!")
         {
@@ -482,7 +483,7 @@ else if (choice == "2") {
         Console.WriteLine("Enter your password: ");
         string password = Console.ReadLine();
 
-        string loginStatus = data.LoginCashierUser(email, password);
+        string loginStatus = await data.LoginCashierUser(email, password);
 
         if (loginStatus == "Login successful!")
         {
