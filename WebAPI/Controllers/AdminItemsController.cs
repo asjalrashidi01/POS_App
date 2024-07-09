@@ -4,10 +4,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Cosmos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Web.Resource;
 using POS_App;
 using WebAPI.Models.Users;
+using WebAPi.Repositories;
 
 namespace WebAPI.Controllers
 {
@@ -17,87 +19,86 @@ namespace WebAPI.Controllers
     {
         private readonly DataContext _context;
 
-        public AdminUsersController(DataContext context)
+        private readonly AdminRepository _repository;
+
+        public AdminUsersController(AdminRepository repository)
+        {
+            _repository = repository;
+        }
+
+        /* public AdminUsersController(DataContext context, CosmosClient client)
         {
             _context = context;
-        }
+            _client = client;
+        } */
 
 
         // GET: api/AdminUsers
         [RequiredScope("Access pos-app-asjal")]
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<AdminDTO>>> GetAdminUsers()
+        public async Task<IEnumerable<AdminDTO>> GetAdminUsers()
         {
-            
-            List<AdminEntity> users = _context.GetAdminUsers();
 
-            List<AdminDTO> result = new List<AdminDTO>();
+            return await _repository.GetAdminUsersAsync();
+        }
 
-            if (users == null)
+        // GET: api/AdminUsers/GetById
+        [RequiredScope("Access pos-app-asjal")]
+        [HttpGet("GetById")]
+        public async Task<ActionResult<AdminDTO>> GetAdminUser(string Id)
+        {
+            AdminDTO val = await _repository.GetAdminUsersAsyncByID(Id);
+
+            if (val == null)
             {
                 return NotFound();
             }
             else
             {
-                foreach (var user in users)
-                {
-                    result.Add(new AdminDTO { Name = user.Name, Email = user.Email });
-                }
-
-
-                return Ok(result);
+                return Ok(val);
             }
         }
-
-        //// GET: api/AdminUser/{email}
-        //[HttpGet("{email}")]
-        //public async Task<ActionResult<AdminDTO>> GetAdminUser(string email)
-        //{
-        //    var adminItem = await _context.;
-
-        //    if (adminItem == null)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    return adminItem;
-        //}
 
         // POST: api/AdminUsers/Login
         [RequiredScope("Access pos-app-asjal")]
         [HttpPost("Login")]
         public async Task<ActionResult<AdminDTO>> LoginAdminUser(string email, string password)
         {
-            string admin = await _context.LoginAdminUser(email, password);
+            AdminDTO admin = await _repository.GetAdminUsersAsyncByEmail(email);
 
-            if (admin == "Incorrect password!")
-            {
-                return Conflict(new { message = "Incorrect password!" });
-            }
-            else if (admin == "Login failed!")
+            if (admin == null)
             {
                 return Conflict(new { message = "Login failed!" });
             }
-            else if (admin == "Login successful!")
+            else if (admin.password == password)
             {
-                return Ok(new { message = "Login successful!"});
+                return Ok(new { message = "Login successful!" });
+            }
+            else if (admin.password != password)
+            {
+                return Conflict(new { message = "Incorrect password!" });
             }
             else
             {
-                return NotFound();
+                return Conflict(new { message = "Login failed!" });
             }
         }
 
         // POST: api/AdminItems/SignUp
         [RequiredScope("Access pos-app-asjal")]
         [HttpPost("Signup")]
-        public async Task<ActionResult<AdminDTO>> SignupAdminUser(string email, string password, string name)
+        public async Task<ActionResult<AdminDTO>> SignupAdminUser(string id, string email, string password, string name)
         {
-            var adminEntity = new AdminEntity(name, email, password);
-            
-            _context.AddAdminUser(adminEntity);
+            var response = await _repository.CreateAdminUsersAsync(new AdminDTO { id = id, email = email, password = password, name = name });
 
-            return Ok("Admin user signed up!");
+            if (response != null)
+            {
+                return Ok("Admin user signed up!");
+            }
+            else
+            {
+                return Conflict(new { message = "Id already exists" });
+            }
         }
     }
 }

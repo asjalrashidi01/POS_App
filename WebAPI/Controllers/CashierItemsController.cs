@@ -4,88 +4,95 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Cosmos;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Web.Resource;
 using POS_App;
 using WebAPI.Models;
+using WebAPI.Models.Users;
+using WebAPi.Repositories;
 
 namespace WebAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class CashierItemsController : ControllerBase
+    public class CashierUsersController : ControllerBase
     {
-        private readonly DataContext _context;
 
-        public CashierItemsController(DataContext context)
+        private readonly CashierRepository _repository;
+
+        public CashierUsersController(CashierRepository repository)
         {
-            _context = context;
+            _repository = repository;
         }
+
 
         // GET: api/CashierUsers
         [RequiredScope("Access pos-app-asjal")]
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<CashierDTO>>> GetCashierUsers()
+        public async Task<IEnumerable<CashierDTO>> GetCashierUsers()
         {
-            List<CashierEntity> users = _context.GetCashierUsers();
 
-            List<CashierDTO> result = new List<CashierDTO>();
-
-            foreach (var user in users)
-            {
-                result.Add(new CashierDTO { Name = user.Name, Email = user.Email });
-            }
-
-            return result;
+            return await _repository.GetCashierUsersAsync();
         }
 
-        //// GET: api/CashierItems/{email}
-        //[HttpGet("{email}")]
-        //public async Task<ActionResult<CashierItem>> GetCashierItem(string email)
-        //{
-        //    var cashierItem = await _context.CashierItems.FindAsync(email);
+        // GET: api/CashierUsers/GetById
+        [RequiredScope("Access pos-app-asjal")]
+        [HttpGet("GetById")]
+        public async Task<ActionResult<CashierDTO>> GetCashierUser(string Id)
+        {
+            CashierDTO val = await _repository.GetCashierUsersAsyncByID(Id);
 
-        //    if (cashierItem == null)
-        //    {
-        //        return NotFound();
-        //    }
+            if (val == null)
+            {
+                return NotFound();
+            }
+            else
+            {
+                return Ok(val);
+            }
+        }
 
-        //    return cashierItem;
-        //}
-
-        // POST: api/CashierItems/Login
+        // POST: api/CashierUsers/Login
         [RequiredScope("Access pos-app-asjal")]
         [HttpPost("Login")]
         public async Task<ActionResult<CashierDTO>> LoginCashierUser(string email, string password)
         {
-            string cashier = await _context.LoginCashierUser(email, password);
+            CashierDTO cashier = await _repository.GetCashierUsersAsyncByEmail(email);
 
-            if (cashier == "Incorrect password!") {
-                return Conflict(new { message = "Incorrect password!" });
-            }
-            else if (cashier == "Login failed!")
+            if (cashier == null)
             {
-                return Conflict(new { message = "Login failed" });
+                return Conflict(new { message = "Login failed!" });
             }
-            else if (cashier == "Login successful!")
+            else if (cashier.password == password)
             {
                 return Ok(new { message = "Login successful!" });
             }
+            else if (cashier.password != password)
+            {
+                return Conflict(new { message = "Incorrect password!" });
+            }
             else
             {
-                return NotFound();
+                return Conflict(new { message = "Login failed!" });
             }
         }
 
         // POST: api/CashierItems/SignUp
         [RequiredScope("Access pos-app-asjal")]
         [HttpPost("Signup")]
-        public async Task<ActionResult<CashierDTO>> SignupCashierItem(string email, string password, string name)
+        public async Task<ActionResult<CashierDTO>> SignupCashierUser(string id, string email, string password, string name)
         {
-            var cashierEntity = new CashierEntity(name, email, password);
+            var response = await _repository.CreateCashierUsersAsync(new CashierDTO { id = id, email = email, password = password, name = name });
 
-            _context.AddCashierUser(cashierEntity);
-
-            return Ok("Cashier user signed up!");   
+            if (response != null)
+            {
+                return Ok("Cashier user signed up!");
+            }
+            else
+            {
+                return Conflict(new { message = "Id already exists" });
+            }
         }
     }
 }
